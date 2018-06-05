@@ -1,0 +1,92 @@
+;;NetLogo
+breed [bovinos cow]
+bovinos-own [energy]
+globals [valor-nutritivo-pasto valor-nutritivo-maleza grasa proteina]
+
+
+to setup
+  clear-all; limpiar todo
+  ask patches [set pcolor 51]
+  set valor-nutritivo-pasto (grass-energy * 10) / 100 ; 10% del valor total nutritivo del pasto
+  set valor-nutritivo-maleza (weed-energy * 10) / 100 ; 10% del valor total nutritivo del pasto
+  grow-grass-and-weeds
+  set-default-shape bovinos "cow"
+  create-bovinos number [
+    set color white
+    set size 3
+    setxy random-xcor random-ycor
+    set grasa random 5
+    set proteina random 5
+    set energy (grasa + proteina)  ;start with a random amt. of energy
+  ]
+  reset-ticks
+end
+
+to go
+
+  if not any? bovinos [ stop ]
+  grow-grass-and-weeds
+  ask bovinos
+  [ move
+    eat-grass
+    eat-weeds
+    produce
+    death
+  ]
+   tick
+end
+
+to grow-grass-and-weeds
+  ask patches [
+    if pcolor = 51 [  ;terreno
+      if random-float 1000 < weeds-grow-rate  ; velocidad crecimiento maleza
+        [ set pcolor sky ]  ;hierba con baja calidad nutritiva
+      if random-float 1000 < grass-grow-rate  ; velocidad crecimiento del pasto
+        [ set pcolor green - 1 ]  ;pasto
+  ] ]
+end
+
+to move  ;; procedimiento de la vaca
+  rt random 50 ;moverse a la derecha
+  lt random 50 ;moverse a la izquierda
+  fd 1 ;avanzar
+  ;; pierde energía
+  set energy energy - 2
+end
+
+to eat-grass  ;; procedimiento de la vaca
+  ;; Al comer pasto obtiene su valor nutritivo
+  if pcolor =  green - 1 ;pasto
+  [ set pcolor 51  ;terreno
+    set proteina (grass-energy - valor-nutritivo-pasto)  + random grass-energy ;alto
+    set grasa (grass-energy - valor-nutritivo-pasto)  + random grass-energy ;alto
+    set energy energy + proteina + grasa ; obtenido a partir del valor nutritivo del pasto
+  ]
+    ;set energy energy + grass-energy ]
+end
+
+to eat-weeds  ;; procedimiento de la vaca
+  ;; Al comer hierba obtiene su valor nutritivo
+  if pcolor = sky
+  [ set pcolor 51 ;terreno
+    set proteina random valor-nutritivo-maleza ; bajo
+    set grasa random valor-nutritivo-maleza ; bajo
+    set energy energy + proteina + grasa ;obtenido a partir del valor nutritivo del pasto
+  ]
+    ;set energy energy + weed-energy ]
+end
+
+to produce     ;; procedimiento de la vaca
+   if energy > birth-threshold
+   [set energy energy / 2
+    hatch 1 [ fd 1 ] ]
+
+
+end
+
+to death     ;; vaca procedimiento
+  ;; muere si sale fuera del rango de energía
+  if energy < 0.3 [ die ]
+end
+; Copyright 2001 Uri Wilensky.
+; See Info tab for full copyright and license.
